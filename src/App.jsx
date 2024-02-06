@@ -1,103 +1,100 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
+  fetchTodos,
   addTodo,
   deleteTodo,
   updateTodo,
   searchTodos,
   toggleSort,
-  fetchTodos,
-} from './redux/actions';
+} from './redux/thunks';
+
 
 function App() {
-  const dispatch = useDispatch();
   const todos = useSelector((state) => state.todos);
-  const searchQuery = useSelector((state) => state.searchQuery);
   const sortMode = useSelector((state) => state.sortMode);
-
+  const dispatch = useDispatch();
   const [newTodo, setNewTodo] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     dispatch(fetchTodos());
   }, [dispatch]);
 
+  const addTodoHandler = () => {
+    dispatch(addTodo(newTodo));
+    setNewTodo('');
+  };
+
+  const deleteTodoHandler = (id) => {
+    dispatch(deleteTodo(id));
+  };
+
+  const updateTodoHandler = (id, newTitle) => {
+    dispatch(updateTodo(id, newTitle));
+  };
+
+  const searchTodosHandler = () => {
+    dispatch(searchTodos(searchQuery));
+  };
+
+  const toggleSortHandler = () => {
+    dispatch(toggleSort());
+  };
+
   const sortedTodos = sortMode
     ? [...todos].sort((a, b) => a.title.localeCompare(b.title))
     : [...todos];
 
-  const handleAddTodo = async () => {
-    if (newTodo.trim() !== '') {
-      await dispatch(addTodo({ title: newTodo }));
-      setNewTodo('');
-    }
-  };
-
-  const handleDeleteTodo = async (id) => {
-    await dispatch(deleteTodo(id));
-  };
-
-  const handleUpdateTodo = async (id, newTitle) => {
-    await dispatch(updateTodo(id, newTitle));
-  };
-
-  const handleSearchTodos = (event) => {
-    event.preventDefault();
-    dispatch(searchTodos(searchQuery));
-  };
-
   return (
-    <>
-      <div className="todo-list">
-        <h1>Todo List</h1>
-        <div>
-          <input
-            type='text'
-            placeholder='Новая задача'
-            value={newTodo}
-            onChange={(event) => setNewTodo(event.target.value)}
-          />
-          <button onClick={handleAddTodo}>Добавить задачу</button>
-        </div>
-
-        <form onSubmit={handleSearchTodos}>
-          <input
-            type='text'
-            placeholder='Поиск задачи'
-            value={searchQuery}
-            onChange={(event) => dispatch(searchTodos(event.target.value))}
-          />
-          <button type="submit">Поиск</button>
-        </form>
-
-        <div>
-          <label>
-            <input
-              type='checkbox'
-              onChange={() => dispatch(toggleSort())}
-            />
-            Сортировать по алфавиту
-          </label>
-        </div>
-        <ul>
-          {sortedTodos.map((todo) => (
-            <li key={todo.id}>
-              {todo.title}
-              <button onClick={() => handleDeleteTodo(todo.id)}>Удалить</button>
-              <button
-                onClick={() => {
-                  const newTitle = prompt('Введите новое название задачи:', todo.title);
-                  if (newTitle !== null) {
-                    handleUpdateTodo(todo.id, newTitle);
-                  }
-                }}
-              >
-                Изменить
-              </button>
-            </li>
-          ))}
-        </ul>
+    <div className="todo-list">
+      <h1>Todo List</h1>
+      <div>
+        <input
+          type="text"
+          placeholder="Новая задача"
+          value={newTodo}
+          onChange={(event) => setNewTodo(event.target.value)}
+        />
+        <button onClick={addTodoHandler}>Добавить задачу</button>
       </div>
-    </>
+
+      <form onSubmit={(event) => { event.preventDefault(); searchTodosHandler(); }}>
+        <input
+          type="text"
+          placeholder="Поиск задачи"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+        />
+        <button type="submit">Поиск</button>
+      </form>
+
+      <div>
+        <label>
+          <input type="checkbox" onChange={toggleSortHandler} />
+          Сортировать по алфавиту
+        </label>
+      </div>
+
+      <ul>
+        {sortedTodos.map((todo) => (
+          <li key={todo.id}>
+            {todo.title}
+            <button onClick={() => deleteTodoHandler(todo.id)}>Удалить</button>
+            <button
+              onClick={() => {
+                const newTitle = prompt('Введите новое название задачи:', todo.title);
+                if (newTitle !== null) {
+                  updateTodoHandler(todo.id, newTitle);
+                }
+              }}
+            >
+              Изменить
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
